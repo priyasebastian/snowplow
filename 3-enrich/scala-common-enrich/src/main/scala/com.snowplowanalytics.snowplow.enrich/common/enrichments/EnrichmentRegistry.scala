@@ -47,7 +47,6 @@ import registry.{
   IpLookupsEnrichment,
   JavascriptScriptEnrichment,
   JavascriptScriptEnrichmentConfig,
-  PiiPseudonymizerEnrichment,
   RefererParserEnrichment,
   UaParserEnrichment,
   UaParserEnrichmentConfig,
@@ -58,6 +57,7 @@ import registry.{
 }
 import registry.apirequest.{ApiRequestEnrichment, ApiRequestEnrichmentConfig}
 import registry.sqlquery.{SqlQueryEnrichment, SqlQueryEnrichmentConfig}
+import registry.pii.PiiPseudonymizerEnrichment
 
 import utils.ScalazJson4sUtils
 
