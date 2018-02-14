@@ -81,7 +81,7 @@ object CljTomcatMailchimpEventSpec {
     null, //
     null, //
     null, //
-    """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.mailchimp/subscribe/jsonschema/1-0-0","data":{"data":{"ip_opt":"82.225.169.220","merges":{"LNAME":"Smith","FNAME":"Agent","EMAIL":"agentsmith@snowplowtest.com"},"email":"agentsmith@snowplowtest.com","list_id":"f1243a3b12","email_type":"html","id":"e7c77d3852","web_id":"210833825"},"fired_at":"2014-11-04T09:42:31.000Z","type":"subscribe"}}}""",
+    """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.mailchimp/subscribe/jsonschema/1-0-0","data":{"data":{"ip_opt":"e59d74b916c9956b60f7d5da92fa269c5deda2232266d57b81dad9eb15e6511b","merges":{"LNAME":"Smith","FNAME":"Agent","EMAIL":"agentsmith@snowplowtest.com"},"email":"1bf145f79707217a8a165496642a5ac43e3ffc8b694b722c376672a1727c7a9c","list_id":"f1243a3b12","email_type":"html","id":"e7c77d3852","web_id":"210833825"},"fired_at":"2014-11-04T09:42:31.000Z","type":"subscribe"}}}""",
     null, // Transaction fields empty
     null, //
     null, //
@@ -145,6 +145,7 @@ class CljTomcatMailchimpEventSpec extends Specification with EnrichJobSpec {
     "correctly output 1 completed call" in {
       val Some(goods) = readPartFile(dirs.output)
       goods.size must_== 1
+      println(goods)
       val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
       for (idx <- CljTomcatMailchimpEventSpec.expected.indices) {
         actual(idx) must BeFieldEqualTo(CljTomcatMailchimpEventSpec.expected(idx), idx)
