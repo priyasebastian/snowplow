@@ -21,6 +21,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.{Success, Failure}
 
+import com.amazonaws.auth._
 import com.amazonaws.services.kinesis.model._
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.kinesis.{AmazonKinesis, AmazonKinesisClientBuilder}
@@ -127,6 +128,30 @@ class KinesisSink private (
     case rnfe: ResourceNotFoundException => false
   }
 
+  /** Create an aws credentials provider through env variables and iam. */
+  private def getProvider(awsConfig: AWSConfig): AWSCredentialsProvider = {
+    def isDefault(key: String): Boolean = key == "default"
+    def isIam(key: String): Boolean = key == "iam"
+    def isEnv(key: String): Boolean = key == "env"
+
+    ((awsConfig.accessKey, awsConfig.secretKey) match {
+      case (a, s) if isDefault(a) && isDefault(s) =>
+        Right(new DefaultAWSCredentialsProviderChain())
+      case (a, s) if isDefault(a) || isDefault(s) =>
+        Left("accessKey and secretKey must both be set to 'default' or neither")
+      case (a, s) if isIam(a) && isIam(s) =>
+        Right(InstanceProfileCredentialsProvider.getInstance())
+      case (a, s) if isIam(a) && isIam(s) =>
+        Left("accessKey and secretKey must both be set to 'iam' or neither")
+      case (a, s) if isEnv(a) && isEnv(s) =>
+        Right(new EnvironmentVariableCredentialsProvider())
+      case (a, s) if isEnv(a) || isEnv(s) =>
+        Left("accessKey and secretKey must both be set to 'env' or neither")
+      case _ => Right(new AWSStaticCredentialsProvider(
+        new BasicAWSCredentials(awsConfig.accessKey, awsConfig.secretKey)))
+    }).fold(s => throw new IllegalArgumentException(s), identity)
+  }
+
   /**
    * Creates a new Kinesis client from provided AWS access key and secret
    * key. If both are set to "cpf", then authenticate using the classpath
@@ -137,7 +162,7 @@ class KinesisSink private (
   private def createKinesisClient(): AmazonKinesis =
     AmazonKinesisClientBuilder
       .standard()
-      .withCredentials(kinesisConfig.aws.provider)
+      .withCredentials(getProvider(kinesisConfig.aws))
       .withEndpointConfiguration(
         new EndpointConfiguration(kinesisConfig.endpoint, kinesisConfig.region))
       .build()
